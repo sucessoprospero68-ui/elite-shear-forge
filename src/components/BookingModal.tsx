@@ -1,0 +1,314 @@
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Loader2, Lock, CheckCircle2 } from "lucide-react";
+import { pt } from "date-fns/locale";
+
+interface BookingModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  selectedService?: string;
+  selectedPrice?: number;
+}
+
+const services = [
+  { name: "Corte Executivo Premium", price: 80 },
+  { name: "Corte + Barba Modelada", price: 120 },
+  { name: "Pacote Noivo/Eventos", price: 200 },
+  { name: "Degradê Profissional", price: 70 },
+  { name: "Tratamento Capilar Premium", price: 150 },
+  { name: "Pigmentação de Barba", price: 100 }
+];
+
+const timeSlots = [
+  "09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"
+];
+
+export const BookingModal = ({ isOpen, onClose, selectedService, selectedPrice }: BookingModalProps) => {
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    nome: "",
+    whatsapp: "",
+    email: "",
+    servico: selectedService || "",
+    data: undefined as Date | undefined,
+    horario: "",
+    observacoes: "",
+    valor: selectedPrice || 0
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from('agendamentos')
+        .insert([{
+          nome: formData.nome,
+          whatsapp: formData.whatsapp,
+          email: formData.email,
+          servico: formData.servico,
+          data: formData.data?.toISOString().split('T')[0],
+          horario: formData.horario,
+          observacoes: formData.observacoes,
+          valor: formData.valor,
+          status: 'pendente'
+        }]);
+
+      if (error) throw error;
+
+      setShowSuccess(true);
+      toast.success("Agendamento confirmado com sucesso!");
+      
+      setTimeout(() => {
+        onClose();
+        setShowSuccess(false);
+        setStep(1);
+        setFormData({
+          nome: "",
+          whatsapp: "",
+          email: "",
+          servico: "",
+          data: undefined,
+          horario: "",
+          observacoes: "",
+          valor: 0
+        });
+      }, 3000);
+    } catch (error) {
+      toast.error("Erro ao realizar agendamento. Tente novamente.");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (showSuccess) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md bg-card border-gold/20">
+          <div className="text-center py-8">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-gold rounded-full mb-6 animate-bounce">
+              <CheckCircle2 className="w-10 h-10 text-black-deep" />
+            </div>
+            <h3 className="text-3xl font-heading mb-4 text-gold">Agendamento Confirmado!</h3>
+            <p className="text-muted-foreground mb-2">Você receberá uma confirmação no WhatsApp em breve.</p>
+            <p className="text-sm text-gold">Prepare-se para uma experiência premium!</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-2xl bg-card border-gold/20 max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-3xl font-heading text-center">
+            Agende Seu <span className="text-gradient-gold">Horário VIP</span>
+          </DialogTitle>
+        </DialogHeader>
+
+        {/* Step Indicator */}
+        <div className="flex items-center justify-center gap-4 mb-8">
+          {[1, 2, 3].map((s) => (
+            <div key={s} className="flex items-center">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
+                step >= s ? 'bg-gradient-gold text-black-deep' : 'bg-muted text-muted-foreground'
+              }`}>
+                {s}
+              </div>
+              {s < 3 && <div className={`w-16 h-1 ${step > s ? 'bg-gold' : 'bg-muted'}`}></div>}
+            </div>
+          ))}
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {step === 1 && (
+            <div className="space-y-4 animate-fade-in-up">
+              <h3 className="text-xl font-heading text-gold mb-4">PASSO 1: Escolha o Serviço</h3>
+              
+              <div className="space-y-2">
+                <Label htmlFor="servico">Serviço *</Label>
+                <Select 
+                  value={formData.servico} 
+                  onValueChange={(value) => {
+                    const service = services.find(s => s.name === value);
+                    setFormData({ ...formData, servico: value, valor: service?.price || 0 });
+                  }}
+                  required
+                >
+                  <SelectTrigger className="bg-muted border-gold/20">
+                    <SelectValue placeholder="Selecione um serviço" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-gold/20">
+                    {services.map((service) => (
+                      <SelectItem key={service.name} value={service.name}>
+                        {service.name} - R${service.price}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formData.valor > 0 && (
+                <div className="bg-gradient-gold/10 border border-gold/20 rounded-lg p-4">
+                  <div className="text-sm text-muted-foreground">Valor do Serviço</div>
+                  <div className="text-3xl font-price text-gold">R${formData.valor}</div>
+                </div>
+              )}
+
+              <Button 
+                type="button"
+                onClick={() => setStep(2)}
+                disabled={!formData.servico}
+                className="w-full btn-gold"
+              >
+                Próximo Passo
+              </Button>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-4 animate-fade-in-up">
+              <h3 className="text-xl font-heading text-gold mb-4">PASSO 2: Data e Horário</h3>
+              
+              <div className="space-y-2">
+                <Label>Escolha a Data *</Label>
+                <Calendar
+                  mode="single"
+                  selected={formData.data}
+                  onSelect={(date) => setFormData({ ...formData, data: date })}
+                  disabled={(date) => date < new Date() || date.getDay() === 0}
+                  locale={pt}
+                  className="rounded-lg border border-gold/20 bg-card p-3 pointer-events-auto"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="horario">Horário *</Label>
+                <Select 
+                  value={formData.horario} 
+                  onValueChange={(value) => setFormData({ ...formData, horario: value })}
+                  required
+                >
+                  <SelectTrigger className="bg-muted border-gold/20">
+                    <SelectValue placeholder="Selecione um horário" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-gold/20">
+                    {timeSlots.map((time) => (
+                      <SelectItem key={time} value={time}>
+                        {time}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex gap-3">
+                <Button type="button" onClick={() => setStep(1)} variant="outline" className="flex-1">
+                  Voltar
+                </Button>
+                <Button 
+                  type="button"
+                  onClick={() => setStep(3)}
+                  disabled={!formData.data || !formData.horario}
+                  className="flex-1 btn-gold"
+                >
+                  Próximo Passo
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="space-y-4 animate-fade-in-up">
+              <h3 className="text-xl font-heading text-gold mb-4">PASSO 3: Seus Dados</h3>
+              
+              <div className="space-y-2">
+                <Label htmlFor="nome">Nome Completo *</Label>
+                <Input
+                  id="nome"
+                  value={formData.nome}
+                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                  className="bg-muted border-gold/20"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="whatsapp">WhatsApp *</Label>
+                <Input
+                  id="whatsapp"
+                  type="tel"
+                  value={formData.whatsapp}
+                  onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                  placeholder="(00) 00000-0000"
+                  className="bg-muted border-gold/20"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="bg-muted border-gold/20"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="observacoes">Observações (opcional)</Label>
+                <Textarea
+                  id="observacoes"
+                  value={formData.observacoes}
+                  onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+                  className="bg-muted border-gold/20"
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <Button type="button" onClick={() => setStep(2)} variant="outline" className="flex-1">
+                  Voltar
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 btn-hero"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Confirmando...
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-5 h-5 mr-2" />
+                      CONFIRMAR AGENDAMENTO
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
