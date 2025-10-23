@@ -34,7 +34,11 @@ export const Footer = () => {
                 </a>
               </li>
               <li>
-                <a href="/admin" className="text-muted-foreground hover:text-gold transition-colors">
+                <a 
+                  href="/admin" 
+                  className="inline-flex items-center gap-2 text-gold hover:text-gold-dark transition-colors font-semibold"
+                >
+                  <Award className="w-4 h-4" />
                   Área Administrativa
                 </a>
               </li>
