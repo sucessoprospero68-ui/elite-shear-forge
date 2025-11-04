@@ -35,7 +35,7 @@ export const Footer = () => {
               </li>
               <li>
                 <a 
-                  href="/admin" 
+                  href="/admin/auth" 
                   className="inline-flex items-center gap-2 text-gold hover:text-gold-dark transition-colors font-semibold"
                 >
                   <Award className="w-4 h-4" />

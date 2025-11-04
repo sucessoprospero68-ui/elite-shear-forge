@@ -3,20 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { 
   Calendar, 
   DollarSign, 
-  Users, 
   TrendingUp, 
   LogOut,
   Phone,
   CheckCircle2,
   XCircle,
   Clock,
-  Search
+  Search,
+  Shield
 } from "lucide-react";
 import {
   Table,
@@ -43,20 +42,49 @@ interface Agendamento {
 
 export default function Admin() {
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
 
   useEffect(() => {
-    const loggedIn = sessionStorage.getItem("adminLoggedIn");
-    if (loggedIn === "true") {
-      setIsLoggedIn(true);
-      loadAgendamentos();
-    }
+    checkAdminAuth();
   }, []);
+
+  const checkAdminAuth = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate('/admin/auth');
+        return;
+      }
+
+      // Verificar se o usuário é admin
+      const { data: roles, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .eq('role', 'admin')
+        .single();
+
+      if (error || !roles) {
+        toast.error('Acesso negado. Você não é administrador.');
+        await supabase.auth.signOut();
+        navigate('/admin/auth');
+        return;
+      }
+
+      setIsAdmin(true);
+      loadAgendamentos();
+    } catch (error) {
+      console.error('Erro ao verificar autenticação:', error);
+      navigate('/admin/auth');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadAgendamentos = async () => {
     const { data, error } = await supabase
@@ -73,22 +101,10 @@ export default function Admin() {
     setAgendamentos(data || []);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (username === "admin" && password === "barber2024") {
-      setIsLoggedIn(true);
-      sessionStorage.setItem("adminLoggedIn", "true");
-      toast.success("Login realizado com sucesso!");
-      loadAgendamentos();
-    } else {
-      toast.error("Usuário ou senha incorretos");
-    }
-  };
-
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    sessionStorage.removeItem("adminLoggedIn");
-    navigate("/");
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast.success("Logout realizado com sucesso");
+    navigate('/admin/auth');
   };
 
   const updateStatus = async (id: string, newStatus: string) => {
@@ -132,69 +148,35 @@ export default function Admin() {
     ag.data === new Date().toISOString().split('T')[0]
   ).length;
 
-  if (!isLoggedIn) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md p-8 bg-card border-gold/20">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-heading mb-2">
-              Painel <span className="text-gradient-gold">Administrativo</span>
-            </h1>
-            <p className="text-muted-foreground">Entre com suas credenciais</p>
-          </div>
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">Usuário</Label>
-              <Input
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="bg-muted border-gold/20"
-                placeholder="admin"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="bg-muted border-gold/20"
-                placeholder="barber2024"
-                required
-              />
-            </div>
-
-            <Button type="submit" className="w-full btn-gold">
-              Entrar
-            </Button>
-          </form>
-
-          <Button 
-            variant="ghost" 
-            className="w-full mt-4"
-            onClick={() => navigate("/")}
-          >
-            Voltar para o site
-          </Button>
-        </Card>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-gold text-xl">Carregando...</div>
       </div>
     );
+  }
+
+  if (!isAdmin) {
+    return null;
   }
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="container mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-4xl font-heading">
-            Painel <span className="text-gradient-gold">Administrativo</span>
-          </h1>
-          <Button onClick={handleLogout} variant="outline" className="gap-2">
+        <div className="flex items-center justify-between mb-8 p-6 bg-card border border-gold/20 rounded-lg">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-gold/10 flex items-center justify-center">
+              <Shield className="w-6 h-6 text-gold" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-heading">
+                Painel <span className="text-gradient-gold">Administrativo</span>
+              </h1>
+              <p className="text-sm text-muted-foreground">Acesso seguro - Gerenciamento de agendamentos</p>
+            </div>
+          </div>
+          <Button onClick={handleLogout} variant="outline" className="gap-2 border-gold/20 text-gold hover:bg-gold/10">
             <LogOut className="w-4 h-4" />
             Sair
           </Button>
