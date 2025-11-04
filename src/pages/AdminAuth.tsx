@@ -173,8 +173,8 @@ export default function AdminAuth() {
               onChange={(e) => setPassword(e.target.value)}
               required
               className="bg-black-deep border-gold/20 text-white"
-              placeholder="••••••••"
-              minLength={6}
+              placeholder="Mínimo 12 caracteres"
+              minLength={12}
             />
           </div>
 

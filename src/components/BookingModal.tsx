@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Lock, CheckCircle2 } from "lucide-react";
 import { pt } from "date-fns/locale";
+import { z } from "zod";
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -26,6 +27,30 @@ const services = [
   { name: "Tratamento Capilar Premium", price: 150 },
   { name: "Pigmentação de Barba", price: 100 }
 ];
+
+const bookingSchema = z.object({
+  nome: z.string()
+    .trim()
+    .min(3, "Nome deve ter pelo menos 3 caracteres")
+    .max(100, "Nome muito longo (máximo 100 caracteres)")
+    .regex(/^[a-zA-ZÀ-ÿ\s]+$/, "Nome deve conter apenas letras"),
+  whatsapp: z.string()
+    .trim()
+    .min(10, "WhatsApp deve ter pelo menos 10 dígitos")
+    .max(20, "WhatsApp inválido")
+    .regex(/^[\d\s\(\)-]+$/, "WhatsApp deve conter apenas números e caracteres válidos"),
+  email: z.string()
+    .trim()
+    .email("Email inválido")
+    .max(255, "Email muito longo"),
+  observacoes: z.string()
+    .max(500, "Observações muito longas (máximo 500 caracteres)")
+    .optional(),
+  servico: z.string().min(1, "Selecione um serviço"),
+  data: z.date({ required_error: "Selecione uma data" }),
+  horario: z.string().min(1, "Selecione um horário"),
+  valor: z.number()
+});
 
 const timeSlots = [
   "09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"
@@ -49,20 +74,33 @@ export const BookingModal = ({ isOpen, onClose, selectedService, selectedPrice }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-
+    
+    // Validar dados com zod
     try {
+      const validatedData = bookingSchema.parse({
+        nome: formData.nome,
+        whatsapp: formData.whatsapp,
+        email: formData.email,
+        observacoes: formData.observacoes || undefined,
+        servico: formData.servico,
+        data: formData.data,
+        horario: formData.horario,
+        valor: formData.valor
+      });
+
+      setLoading(true);
+
       const { error } = await supabase
         .from('agendamentos')
         .insert([{
-          nome: formData.nome,
-          whatsapp: formData.whatsapp,
-          email: formData.email,
-          servico: formData.servico,
-          data: formData.data?.toISOString().split('T')[0],
-          horario: formData.horario,
-          observacoes: formData.observacoes,
-          valor: formData.valor,
+          nome: validatedData.nome,
+          whatsapp: validatedData.whatsapp,
+          email: validatedData.email,
+          servico: validatedData.servico,
+          data: validatedData.data.toISOString().split('T')[0],
+          horario: validatedData.horario,
+          observacoes: validatedData.observacoes || null,
+          valor: validatedData.valor,
           status: 'pendente'
         }]);
 
@@ -87,8 +125,13 @@ export const BookingModal = ({ isOpen, onClose, selectedService, selectedPrice }
         });
       }, 3000);
     } catch (error) {
-      toast.error("Erro ao realizar agendamento. Tente novamente.");
-      console.error(error);
+      if (error instanceof z.ZodError) {
+        const firstError = error.errors[0];
+        toast.error(firstError.message);
+      } else {
+        toast.error("Erro ao realizar agendamento. Tente novamente.");
+        console.error(error);
+      }
     } finally {
       setLoading(false);
     }
