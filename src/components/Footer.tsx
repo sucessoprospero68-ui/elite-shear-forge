@@ -1,4 +1,5 @@
 import { MapPin, Phone, Mail, Clock, Instagram, Facebook, Award } from "lucide-react";
+import zentrixLogo from "@/assets/zentrix-logo.png";
 
 export const Footer = () => {
   return (
@@ -7,9 +8,11 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
           {/* Sobre */}
           <div>
-            <h3 className="text-2xl font-heading mb-4 text-gradient-gold">
-              BARBEARIA PREMIUM
-            </h3>
+            <img 
+              src={zentrixLogo} 
+              alt="ZENTRIX - Elite. Unriavled. Yours." 
+              className="w-64 mb-6"
+            />
             <p className="text-muted-foreground mb-4">
               Transformando homens em homens de sucesso desde 2012.
             </p>
