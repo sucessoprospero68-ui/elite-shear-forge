@@ -13,6 +13,7 @@ export default function AdminAuth() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
 
   useEffect(() => {
     checkUser();
@@ -131,6 +132,52 @@ export default function AdminAuth() {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/admin/auth?reset=true`,
+      });
+
+      if (error) throw error;
+
+      toast.success('Email de recuperação enviado! Verifique sua caixa de entrada.');
+      setIsForgotPassword(false);
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao enviar email de recuperação');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdatePassword = async (newPassword: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) throw error;
+
+      toast.success('Senha atualizada com sucesso!');
+      navigate('/admin');
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao atualizar senha');
+    }
+  };
+
+  // Verificar se é redirect de reset de senha
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('reset') === 'true') {
+      const newPassword = prompt('Digite sua nova senha (mínimo 12 caracteres):');
+      if (newPassword && newPassword.length >= 12) {
+        handleUpdatePassword(newPassword);
+      }
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-black-deep flex items-center justify-center p-4">
       <Card className="w-full max-w-md p-8 bg-gray-dark border-gold/20">
@@ -142,11 +189,11 @@ export default function AdminAuth() {
             Painel Administrativo
           </h1>
           <p className="text-muted-foreground text-center">
-            {isSignup ? 'Criar primeira conta admin' : 'Entre com suas credenciais'}
+            {isForgotPassword ? 'Recuperar senha' : (isSignup ? 'Criar primeira conta admin' : 'Entre com suas credenciais')}
           </p>
         </div>
 
-        <form onSubmit={isSignup ? handleSignup : handleLogin} className="space-y-4">
+        <form onSubmit={isForgotPassword ? handleForgotPassword : (isSignup ? handleSignup : handleLogin)} className="space-y-4">
           <div>
             <label className="text-sm text-muted-foreground mb-2 block">
               <Mail className="w-4 h-4 inline mr-2" />
@@ -162,38 +209,63 @@ export default function AdminAuth() {
             />
           </div>
 
-          <div>
-            <label className="text-sm text-muted-foreground mb-2 block">
-              <Lock className="w-4 h-4 inline mr-2" />
-              Senha
-            </label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="bg-black-deep border-gold/20 text-white"
-              placeholder="Mínimo 12 caracteres"
-              minLength={12}
-            />
-          </div>
+          {!isForgotPassword && (
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">
+                <Lock className="w-4 h-4 inline mr-2" />
+                Senha
+              </label>
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="bg-black-deep border-gold/20 text-white"
+                placeholder="Mínimo 12 caracteres"
+                minLength={12}
+              />
+            </div>
+          )}
 
           <Button
             type="submit"
             disabled={loading}
             className="w-full bg-gold hover:bg-gold/90 text-black font-semibold"
           >
-            {loading ? 'Processando...' : (isSignup ? 'Criar Conta Admin' : 'Entrar')}
+            {loading ? 'Processando...' : (isForgotPassword ? 'Enviar Email de Recuperação' : (isSignup ? 'Criar Conta Admin' : 'Entrar'))}
           </Button>
 
-          <div className="text-center">
+          <div className="text-center space-y-2">
+            {!isForgotPassword && !isSignup && (
+              <button
+                type="button"
+                onClick={() => setIsForgotPassword(true)}
+                className="text-sm text-muted-foreground hover:text-gold transition-colors block w-full"
+              >
+                Esqueceu a senha?
+              </button>
+            )}
+            
             <button
               type="button"
-              onClick={() => setIsSignup(!isSignup)}
-              className="text-sm text-gold hover:text-gold/80 transition-colors"
+              onClick={() => {
+                setIsSignup(!isSignup);
+                setIsForgotPassword(false);
+              }}
+              className="text-sm text-gold hover:text-gold/80 transition-colors block w-full"
             >
               {isSignup ? 'Já tem conta? Fazer login' : 'Primeira vez? Criar conta admin'}
             </button>
+
+            {isForgotPassword && (
+              <button
+                type="button"
+                onClick={() => setIsForgotPassword(false)}
+                className="text-sm text-muted-foreground hover:text-gold transition-colors block w-full"
+              >
+                Voltar para login
+              </button>
+            )}
           </div>
         </form>
 
