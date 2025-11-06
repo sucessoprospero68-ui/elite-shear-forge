@@ -8,9 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Lock, CheckCircle2 } from "lucide-react";
+import { Loader2, Lock, CheckCircle2, MessageCircle } from "lucide-react";
 import { pt } from "date-fns/locale";
+import { format } from "date-fns";
 import { z } from "zod";
+
+// Número do WhatsApp da barbearia (formato: 5511999999999)
+const WHATSAPP_NUMBER = "5511999999999";
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -71,6 +75,52 @@ export const BookingModal = ({ isOpen, onClose, selectedService, selectedPrice }
     observacoes: "",
     valor: selectedPrice || 0
   });
+
+  const handleWhatsAppBooking = () => {
+    // Validar dados básicos antes de abrir WhatsApp
+    try {
+      bookingSchema.parse({
+        nome: formData.nome,
+        whatsapp: formData.whatsapp,
+        email: formData.email,
+        observacoes: formData.observacoes || undefined,
+        servico: formData.servico,
+        data: formData.data,
+        horario: formData.horario,
+        valor: formData.valor
+      });
+
+      const dataFormatada = formData.data 
+        ? format(formData.data, "dd/MM/yyyy", { locale: pt })
+        : "";
+
+      const mensagem = `Olá! 👋 Gostaria de agendar um horário na *ZENTRIXIA Barbearia Premium* ✨
+
+*📋 Dados do Agendamento:*
+━━━━━━━━━━━━━━━━━━━━
+👤 *Nome:* ${formData.nome}
+✂️ *Serviço:* ${formData.servico}
+💰 *Valor:* R$${formData.valor}
+📅 *Data:* ${dataFormatada}
+🕐 *Horário:* ${formData.horario}
+📱 *WhatsApp:* ${formData.whatsapp}
+📧 *Email:* ${formData.email}
+${formData.observacoes ? `\n📝 *Observações:* ${formData.observacoes}` : ''}
+━━━━━━━━━━━━━━━━━━━━
+
+Aguardo confirmação! 🙏`;
+
+      const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(mensagem)}`;
+      window.open(url, '_blank');
+      
+      toast.success("Abrindo WhatsApp...");
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const firstError = error.errors[0];
+        toast.error(firstError.message);
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -326,27 +376,52 @@ export const BookingModal = ({ isOpen, onClose, selectedService, selectedPrice }
                 />
               </div>
 
-              <div className="flex gap-3">
-                <Button type="button" onClick={() => setStep(2)} variant="outline" className="flex-1">
-                  Voltar
-                </Button>
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  <Button type="button" onClick={() => setStep(2)} variant="outline" className="flex-1">
+                    Voltar
+                  </Button>
+                  <Button 
+                    type="submit"
+                    disabled={loading}
+                    className="flex-1 btn-hero"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Confirmando...
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-5 h-5 mr-2" />
+                        CONFIRMAR AGENDAMENTO
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-gold/20" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">ou</span>
+                  </div>
+                </div>
+
                 <Button 
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 btn-hero"
+                  type="button"
+                  onClick={handleWhatsAppBooking}
+                  variant="outline"
+                  className="w-full border-green-500/50 hover:bg-green-500/10 hover:border-green-500 text-green-500 font-semibold transition-all"
                 >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Confirmando...
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="w-5 h-5 mr-2" />
-                      CONFIRMAR AGENDAMENTO
-                    </>
-                  )}
+                  <MessageCircle className="w-5 h-5 mr-2" />
+                  Agendar pelo WhatsApp
                 </Button>
+                
+                <p className="text-xs text-center text-muted-foreground">
+                  💬 Prefere conversar direto? Clique acima para abrir o WhatsApp com seus dados pré-preenchidos!
+                </p>
               </div>
             </div>
           )}
