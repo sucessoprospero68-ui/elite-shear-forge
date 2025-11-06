@@ -79,19 +79,6 @@ export default function AdminAuth() {
     setLoading(true);
 
     try {
-      // Verificar se já existe algum admin
-      const { data: existingAdmins } = await supabase
-        .from('user_roles')
-        .select('id')
-        .eq('role', 'admin')
-        .limit(1);
-
-      if (existingAdmins && existingAdmins.length > 0) {
-        toast.error('Já existe um administrador. Entre em contato com o admin atual.');
-        setIsSignup(false);
-        return;
-      }
-
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -103,30 +90,18 @@ export default function AdminAuth() {
       if (error) throw error;
 
       if (data.user) {
-        // Criar role de admin para o primeiro usuário
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: data.user.id,
-            role: 'admin',
-          });
-
-        if (roleError) throw roleError;
-
-        toast.success('Conta admin criada com sucesso! Fazendo login...');
-        
-        // Fazer login automaticamente
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (signInError) throw signInError;
-
-        navigate('/admin');
+        toast.success('Conta criada com sucesso! Entre em contato com um administrador para obter acesso ao painel.');
+        setIsSignup(false);
+        setEmail('');
+        setPassword('');
       }
     } catch (error: any) {
-      toast.error(error.message || 'Erro ao criar conta admin');
+      if (error.message?.includes('already registered')) {
+        toast.error('Este email já está cadastrado. Use o formulário de login.');
+        setIsSignup(false);
+      } else {
+        toast.error(error.message || 'Erro ao criar conta');
+      }
     } finally {
       setLoading(false);
     }
@@ -189,7 +164,7 @@ export default function AdminAuth() {
             Painel Administrativo
           </h1>
           <p className="text-muted-foreground text-center">
-            {isForgotPassword ? 'Recuperar senha' : (isSignup ? 'Criar primeira conta admin' : 'Entre com suas credenciais')}
+            {isForgotPassword ? 'Recuperar senha' : (isSignup ? 'Criar nova conta' : 'Entre com suas credenciais de admin')}
           </p>
         </div>
 
@@ -232,7 +207,7 @@ export default function AdminAuth() {
             disabled={loading}
             className="w-full bg-gold hover:bg-gold/90 text-black font-semibold"
           >
-            {loading ? 'Processando...' : (isForgotPassword ? 'Enviar Email de Recuperação' : (isSignup ? 'Criar Conta Admin' : 'Entrar'))}
+            {loading ? 'Processando...' : (isForgotPassword ? 'Enviar Email de Recuperação' : (isSignup ? 'Criar Conta' : 'Entrar'))}
           </Button>
 
           <div className="text-center space-y-2">
@@ -254,7 +229,7 @@ export default function AdminAuth() {
               }}
               className="text-sm text-gold hover:text-gold/80 transition-colors block w-full"
             >
-              {isSignup ? 'Já tem conta? Fazer login' : 'Primeira vez? Criar conta admin'}
+              {isSignup ? 'Já tem conta? Fazer login' : 'Não tem conta? Criar conta'}
             </button>
 
             {isForgotPassword && (
