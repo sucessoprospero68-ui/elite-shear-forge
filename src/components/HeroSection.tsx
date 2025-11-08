@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Star, Calendar } from "lucide-react";
+import { Star, Calendar, User } from "lucide-react";
+import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-barber.jpg";
 
 interface HeroSectionProps {
@@ -15,6 +16,19 @@ export const HeroSection = ({ onBookNowClick }: HeroSectionProps) => {
         style={{ backgroundImage: `url(${heroImage})` }}
       >
         <div className="absolute inset-0 bg-gradient-hero"></div>
+      </div>
+
+      {/* Top Navigation */}
+      <div className="absolute top-0 right-0 z-20 p-6">
+        <Link to="/auth">
+          <Button 
+            variant="outline" 
+            className="border-gold/30 hover:border-gold hover:bg-gold/10 backdrop-blur-md"
+          >
+            <User className="w-4 h-4 mr-2" />
+            Área do Profissional
+          </Button>
+        </Link>
       </div>
 
       {/* Content */}
