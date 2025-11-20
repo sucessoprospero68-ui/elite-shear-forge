@@ -157,9 +157,41 @@ export default function Dashboard() {
   const faturamentoTotal = agendamentos
     .filter(ag => ag.status === "concluido")
     .reduce((sum, ag) => sum + Number(ag.valor), 0);
-  const agendamentosHoje = agendamentos.filter(ag => 
-    ag.data === new Date().toISOString().split('T')[0]
-  ).length;
+  
+  // Relatório Diário
+  const hoje = new Date().toISOString().split('T')[0];
+  const agendamentosHoje = agendamentos.filter(ag => ag.data === hoje);
+  const faturamentoHoje = agendamentosHoje
+    .filter(ag => ag.status === "concluido")
+    .reduce((sum, ag) => sum + Number(ag.valor), 0);
+  const confirmadosHoje = agendamentosHoje.filter(ag => ag.status === "confirmado").length;
+  
+  // Relatório Semanal
+  const getStartOfWeek = (date: Date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Ajusta para segunda-feira
+    return new Date(d.setDate(diff)).toISOString().split('T')[0];
+  };
+  
+  const startOfWeek = getStartOfWeek(new Date());
+  const startOfLastWeek = getStartOfWeek(new Date(new Date().setDate(new Date().getDate() - 7)));
+  
+  const agendamentosSemana = agendamentos.filter(ag => ag.data >= startOfWeek);
+  const faturamentoSemana = agendamentosSemana
+    .filter(ag => ag.status === "concluido")
+    .reduce((sum, ag) => sum + Number(ag.valor), 0);
+  
+  const agendamentosSemanaPassada = agendamentos.filter(
+    ag => ag.data >= startOfLastWeek && ag.data < startOfWeek
+  );
+  const faturamentoSemanaPassada = agendamentosSemanaPassada
+    .filter(ag => ag.status === "concluido")
+    .reduce((sum, ag) => sum + Number(ag.valor), 0);
+  
+  const variacaoSemanal = agendamentosSemanaPassada.length > 0
+    ? ((agendamentosSemana.length - agendamentosSemanaPassada.length) / agendamentosSemanaPassada.length * 100)
+    : 0;
 
   if (loading) {
     return (
@@ -217,7 +249,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Hoje</p>
-                <p className="text-3xl font-price text-gold">{agendamentosHoje}</p>
+                <p className="text-3xl font-price text-gold">{agendamentosHoje.length}</p>
               </div>
               <Clock className="w-10 h-10 text-gold" />
             </div>
@@ -232,6 +264,67 @@ export default function Dashboard() {
                 </p>
               </div>
               <TrendingUp className="w-10 h-10 text-gold" />
+            </div>
+          </Card>
+        </div>
+
+        {/* Relatórios Diário e Semanal */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          {/* Relatório Diário */}
+          <Card className="p-6 bg-card border-gold/20">
+            <div className="flex items-center gap-3 mb-4">
+              <Calendar className="w-6 h-6 text-gold" />
+              <h2 className="text-xl font-heading text-gold">Relatório Diário</h2>
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                <span className="text-sm text-muted-foreground">Total de Agendamentos</span>
+                <span className="text-lg font-semibold text-gold">{agendamentosHoje.length}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                <span className="text-sm text-muted-foreground">Confirmados</span>
+                <span className="text-lg font-semibold text-green-500">{confirmadosHoje}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                <span className="text-sm text-muted-foreground">Pendentes</span>
+                <span className="text-lg font-semibold text-yellow-500">
+                  {agendamentosHoje.filter(ag => ag.status === "pendente").length}
+                </span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-gradient-gold/10 border border-gold/20 rounded-lg">
+                <span className="text-sm font-semibold">Faturamento Hoje</span>
+                <span className="text-xl font-price text-gold">R${faturamentoHoje.toFixed(2)}</span>
+              </div>
+            </div>
+          </Card>
+
+          {/* Relatório Semanal */}
+          <Card className="p-6 bg-card border-gold/20">
+            <div className="flex items-center gap-3 mb-4">
+              <TrendingUp className="w-6 h-6 text-gold" />
+              <h2 className="text-xl font-heading text-gold">Relatório Semanal</h2>
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                <span className="text-sm text-muted-foreground">Esta Semana</span>
+                <span className="text-lg font-semibold text-gold">{agendamentosSemana.length}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                <span className="text-sm text-muted-foreground">Semana Passada</span>
+                <span className="text-lg font-semibold text-muted-foreground">
+                  {agendamentosSemanaPassada.length}
+                </span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                <span className="text-sm text-muted-foreground">Variação</span>
+                <span className={`text-lg font-semibold ${variacaoSemanal >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {variacaoSemanal >= 0 ? '+' : ''}{variacaoSemanal.toFixed(1)}%
+                </span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-gradient-gold/10 border border-gold/20 rounded-lg">
+                <span className="text-sm font-semibold">Faturamento Semana</span>
+                <span className="text-xl font-price text-gold">R${faturamentoSemana.toFixed(2)}</span>
+              </div>
             </div>
           </Card>
         </div>
