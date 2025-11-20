@@ -16,7 +16,10 @@ import {
   Clock,
   Search,
   User,
-  Building2
+  Building2,
+  Trash2,
+  Archive,
+  Filter
 } from "lucide-react";
 import {
   Table,
@@ -54,6 +57,7 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
   const [userId, setUserId] = useState<string | null>(null);
+  const [showOnlyFuture, setShowOnlyFuture] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -135,6 +139,47 @@ export default function Dashboard() {
     loadAgendamentos(userId);
   };
 
+  const limparAgendamentosAntigos = async () => {
+    if (!userId) return;
+    
+    const dataLimite = new Date();
+    dataLimite.setDate(dataLimite.getDate() - 30);
+    const dataLimiteStr = dataLimite.toISOString().split('T')[0];
+
+    const { error } = await supabase
+      .from('agendamentos')
+      .delete()
+      .eq('owner_id', userId)
+      .in('status', ['concluido', 'cancelado'])
+      .lt('data', dataLimiteStr);
+
+    if (error) {
+      toast.error("Erro ao limpar agendamentos");
+      return;
+    }
+
+    toast.success("Agendamentos antigos removidos com sucesso!");
+    loadAgendamentos(userId);
+  };
+
+  const arquivarCancelados = async () => {
+    if (!userId) return;
+
+    const { error } = await supabase
+      .from('agendamentos')
+      .delete()
+      .eq('owner_id', userId)
+      .eq('status', 'cancelado');
+
+    if (error) {
+      toast.error("Erro ao arquivar cancelados");
+      return;
+    }
+
+    toast.success("Agendamentos cancelados removidos!");
+    loadAgendamentos(userId);
+  };
+
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", label: string }> = {
       pendente: { variant: "outline", label: "Pendente" },
@@ -150,7 +195,12 @@ export default function Dashboard() {
                           ag.whatsapp.includes(searchTerm) ||
                           ag.servico.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "todos" || ag.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    
+    // Filtro de datas futuras
+    const hoje = new Date().toISOString().split('T')[0];
+    const matchesFuture = !showOnlyFuture || ag.data >= hoje;
+    
+    return matchesSearch && matchesStatus && matchesFuture;
   });
 
   const totalAgendamentos = agendamentos.length;
@@ -328,6 +378,44 @@ export default function Dashboard() {
             </div>
           </Card>
         </div>
+
+        {/* Ações Rápidas */}
+        <Card className="p-4 bg-card border-gold/20 mb-6">
+          <div className="flex flex-wrap gap-3 items-center justify-between">
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowOnlyFuture(!showOnlyFuture)}
+                className={showOnlyFuture ? "bg-gold/10 border-gold" : ""}
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                {showOnlyFuture ? "Mostrando Futuros" : "Mostrar Apenas Futuros"}
+              </Button>
+            </div>
+
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={arquivarCancelados}
+                className="border-orange-500/50 text-orange-500 hover:bg-orange-500/10"
+              >
+                <Archive className="w-4 h-4 mr-2" />
+                Limpar Cancelados
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={limparAgendamentosAntigos}
+                className="border-red-500/50 text-red-500 hover:bg-red-500/10"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Limpar Antigos (30+ dias)
+              </Button>
+            </div>
+          </div>
+        </Card>
 
         {/* Filtros */}
         <Card className="p-6 bg-card border-gold/20 mb-6">
