@@ -16,6 +16,9 @@ import { z } from "zod";
 // Número do WhatsApp da barbearia (formato: 5511999999999)
 const WHATSAPP_NUMBER = "5511999999999";
 
+// ID do dono padrão para vincular todos os agendamentos ao painel administrativo
+const DEFAULT_OWNER_ID = "c729bdda-30e7-4aca-a5cc-30566f578f1f";
+
 interface BookingModalProps {
   isOpen: boolean;
   onClose: () => void;
