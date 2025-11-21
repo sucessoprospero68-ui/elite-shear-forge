@@ -115,6 +115,32 @@ export default function Dashboard() {
     setAgendamentos(data || []);
   };
 
+  // Atualização em tempo real dos agendamentos
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel('agendamentos-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'agendamentos',
+          filter: `owner_id=eq.${userId}`
+        },
+        (payload) => {
+          console.log('Novo agendamento recebido:', payload);
+          loadAgendamentos(userId);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast.success("Logout realizado com sucesso");
