@@ -143,15 +143,6 @@ Aguardo confirmação! 🙏`;
 
       setLoading(true);
 
-      // Buscar o primeiro profissional (owner padrão)
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id')
-        .order('created_at', { ascending: true })
-        .limit(1);
-
-      const ownerId = profiles?.[0]?.id;
-
       const { error } = await supabase
         .from('agendamentos')
         .insert([{
@@ -164,7 +155,7 @@ Aguardo confirmação! 🙏`;
           observacoes: validatedData.observacoes || null,
           valor: validatedData.valor,
           status: 'pendente',
-          owner_id: ownerId
+          owner_id: DEFAULT_OWNER_ID
         }]);
 
       if (error) throw error;
