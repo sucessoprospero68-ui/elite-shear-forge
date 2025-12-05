@@ -1,41 +1,53 @@
 import { Star, Quote, BadgeCheck } from "lucide-react";
+import testimonialRicardo from "@/assets/testimonial-ricardo.jpg";
+import testimonialJoao from "@/assets/testimonial-joao.jpg";
+import testimonialCarlos from "@/assets/testimonial-carlos.jpg";
+import testimonialFernando from "@/assets/testimonial-fernando.jpg";
+import testimonialMarcos from "@/assets/testimonial-marcos.jpg";
+import testimonialPaulo from "@/assets/testimonial-paulo.jpg";
 
 const testimonials = [
   {
     name: "Ricardo Silva",
     role: "Empresário",
     text: "Melhor investimento que faço todo mês. Atendimento impecável e resultado profissional sempre!",
-    rating: 5
+    rating: 5,
+    image: testimonialRicardo
   },
   {
     name: "João Pedro",
     role: "CEO",
     text: "Meu visual mudou completamente. Aumentou até minha confiança em reuniões importantes!",
-    rating: 5
+    rating: 5,
+    image: testimonialJoao
   },
   {
     name: "Carlos Eduardo",
     role: "Advogado",
     text: "Profissionais de verdade. A atenção aos detalhes faz toda diferença. Nunca mais troco de barbearia.",
-    rating: 5
+    rating: 5,
+    image: testimonialCarlos
   },
   {
     name: "Fernando Alves",
     role: "Executivo",
     text: "Ambiente premium, atendimento VIP. Realmente se sentem os anos de experiência da equipe.",
-    rating: 5
+    rating: 5,
+    image: testimonialFernando
   },
   {
     name: "Marcos Antônio",
     role: "Empreendedor",
     text: "A consultoria de estilo incluída é um diferencial. Sempre saio com um visual impecável!",
-    rating: 5
+    rating: 5,
+    image: testimonialMarcos
   },
   {
     name: "Paulo Roberto",
     role: "Diretor Comercial",
     text: "Agendamento online facilita muito. E o resultado sempre supera as expectativas!",
-    rating: 5
+    rating: 5,
+    image: testimonialPaulo
   }
 ];
 
@@ -83,8 +95,12 @@ export const TestimonialsSection = () => {
               <p className="text-lg mb-6 relative z-10 italic">"{testimonial.text}"</p>
 
               <div className="flex items-center gap-4 relative z-10">
-                <div className="w-12 h-12 rounded-full bg-gradient-gold flex items-center justify-center text-black-deep font-heading text-xl glow-pulse">
-                  {testimonial.name.charAt(0)}
+                <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-gold/50 glow-pulse">
+                  <img 
+                    src={testimonial.image} 
+                    alt={testimonial.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div>
                   <div className="font-semibold flex items-center gap-2">
