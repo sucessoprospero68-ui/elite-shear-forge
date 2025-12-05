@@ -51,7 +51,7 @@ export const HeroSection = ({ onBookNowClick }: HeroSectionProps) => {
         <h1 className="text-5xl md:text-7xl lg:text-8xl font-heading mb-6 leading-tight animate-blur-in">
           <span className="inline-block animate-slide-in-left" style={{ animationDelay: '0.2s' }}>TRANSFORME SEU VISUAL.</span>
           <br />
-          <span className="text-gradient-gold neon-text inline-block animate-slide-in-right" style={{ animationDelay: '0.4s' }}>ELEVE SUA CONFIANÇA.</span>
+          <span className="text-gradient-gold gold-glow inline-block animate-slide-in-right" style={{ animationDelay: '0.4s' }}>ELEVE SUA CONFIANÇA.</span>
         </h1>
 
         {/* Subheadline */}
