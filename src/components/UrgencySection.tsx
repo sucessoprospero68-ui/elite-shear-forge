@@ -88,15 +88,15 @@ export const UrgencySection = ({ onBookNowClick }: UrgencySectionProps) => {
           </div>
 
           {/* CTA Button */}
-          <div className="animate-scale-bounce" style={{ animationDelay: '0.8s' }}>
+          <div className="animate-scale-bounce flex justify-center w-full px-4" style={{ animationDelay: '0.8s' }}>
             <Button 
               onClick={onBookNowClick}
               size="lg"
-              className="btn-hero text-xl px-16 py-8 mb-6 btn-magnetic ripple relative overflow-hidden group"
+              className="btn-hero text-base md:text-xl px-8 md:px-16 py-6 md:py-8 mb-6 btn-magnetic ripple relative overflow-hidden group w-full max-w-xs md:max-w-none md:w-auto"
             >
               <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
-              <Zap className="w-6 h-6 mr-2 heartbeat" />
-              GARANTIR MINHA VAGA AGORA
+              <Zap className="w-5 h-5 md:w-6 md:h-6 mr-2 heartbeat" />
+              <span className="text-center">GARANTIR MINHA VAGA AGORA</span>
             </Button>
           </div>
 
