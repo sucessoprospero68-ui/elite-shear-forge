@@ -12,9 +12,10 @@ import { Loader2, Lock, CheckCircle2, MessageCircle } from "lucide-react";
 import { pt } from "date-fns/locale";
 import { format } from "date-fns";
 import { z } from "zod";
+import { sendWhatsAppNotification } from "@/hooks/useWhatsAppNotify";
 
-// Número do WhatsApp da barbearia (formato: 5511999999999)
-const WHATSAPP_NUMBER = "5511999999999";
+// Link do WhatsApp da barbearia
+const WHATSAPP_LINK = "https://wa.me/message/LZQJBTUALFUYE1";
 
 // ID do dono padrão (sua conta do painel) para receber todos os agendamentos
 // Usuário: multflaviopassivo@gmail.com
@@ -114,8 +115,8 @@ ${formData.observacoes ? `\n📝 *Observações:* ${formData.observacoes}` : ''}
 
 Aguardo confirmação! 🙏`;
 
-      const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(mensagem)}`;
-      window.open(url, '_blank');
+      // Usar o link direto fornecido
+      window.open(WHATSAPP_LINK, '_blank');
       
       toast.success("Abrindo WhatsApp...");
     } catch (error) {
@@ -160,6 +161,19 @@ Aguardo confirmação! 🙏`;
         }]);
 
       if (error) throw error;
+
+      // Enviar notificação via WhatsApp
+      await sendWhatsAppNotification("novo_agendamento", {
+        id: "",
+        nome: validatedData.nome,
+        whatsapp: validatedData.whatsapp,
+        email: validatedData.email,
+        servico: validatedData.servico,
+        data: validatedData.data.toISOString().split('T')[0],
+        horario: validatedData.horario,
+        valor: validatedData.valor,
+        observacoes: validatedData.observacoes || undefined
+      });
 
       setShowSuccess(true);
       toast.success("Agendamento confirmado com sucesso!");

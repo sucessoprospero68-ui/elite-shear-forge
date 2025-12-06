@@ -19,7 +19,9 @@ import {
   Building2,
   Trash2,
   Archive,
-  Filter
+  Filter,
+  Bell,
+  MessageCircle
 } from "lucide-react";
 import {
   Table,
@@ -30,6 +32,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { sendWhatsAppNotification } from "@/hooks/useWhatsAppNotify";
+
+// Link do WhatsApp para notificações diretas
+const WHATSAPP_LINK = "https://wa.me/message/LZQJBTUALFUYE1";
 
 interface Agendamento {
   id: string;
@@ -115,7 +121,7 @@ export default function Dashboard() {
     setAgendamentos(data || []);
   };
 
-  // Atualização em tempo real dos agendamentos
+  // Atualização em tempo real dos agendamentos com notificações
   useEffect(() => {
     if (!userId) return;
 
@@ -129,8 +135,48 @@ export default function Dashboard() {
           table: 'agendamentos',
           filter: `owner_id=eq.${userId}`
         },
-        (payload) => {
-          console.log('Novo agendamento recebido:', payload);
+        async (payload) => {
+          console.log('Evento de agendamento recebido:', payload);
+          
+          // Notificação para novos agendamentos
+          if (payload.eventType === 'INSERT' && payload.new) {
+            const newAgendamento = payload.new as Agendamento;
+            
+            // Mostrar toast com som
+            toast.success(`🆕 Novo Agendamento!`, {
+              description: `${newAgendamento.nome} - ${newAgendamento.servico}`,
+              duration: 10000,
+              action: {
+                label: "Ver WhatsApp",
+                onClick: () => window.open(WHATSAPP_LINK, '_blank')
+              }
+            });
+
+            // Tocar som de notificação
+            try {
+              const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleQ0LV5vUxHBvFgYhpNCnc3gbBT+e0K5tcxEEQJ7Rt2p2FgUzntW4ZHgWBSuZ0L5ieRQFJ5vTvGN4FAUjmtO9YnkUBR+b1L5heRQFG5rVv2F5FAUam9a/YXkUBRia1sBheRQFGJnXwGF5FAUXmdfAYXkUBRea2MFheRQFF5nYwWF5FAUXmdjBYXkUBReZ2MFheRQFF5nYwWF5FAUXmdjBYXkUBReZ2MFheRQFF5rYwWF5FAUXm9jBYHkUBRec2MFgeRQFF53YwV95FAUXndfBX3kUBRed18FfeRQFF53XwV95FAUXndfBX3kUBRec18JfeRQFF5zXwl95FAUXnNfCX3kUBRec18JfeRQFF5zXwl95FAUXnNbCX3kUBRec1sJfeRQFF5zWwl95FAUXnNbCX3kUBRed1sJeeRQFF53Wwl55FAUXndbCXnkUBRed1sJeeRQFF53Wwl55FAUXndbCXnkUBRed1cJeeRQFF53Vwl55FAUXndXCXnkUBRed1cJeeRQFF53Vwl55FAUXndXCXnkUBQ==');
+              audio.volume = 0.5;
+              audio.play().catch(() => {});
+            } catch (e) {}
+          }
+          
+          // Notificação para cancelamentos
+          if (payload.eventType === 'UPDATE' && payload.new && payload.old) {
+            const newData = payload.new as Agendamento;
+            const oldData = payload.old as Agendamento;
+            
+            if (oldData.status !== 'cancelado' && newData.status === 'cancelado') {
+              toast.error(`❌ Agendamento Cancelado!`, {
+                description: `${newData.nome} - ${newData.servico}`,
+                duration: 10000,
+                action: {
+                  label: "Ver WhatsApp",
+                  onClick: () => window.open(WHATSAPP_LINK, '_blank')
+                }
+              });
+            }
+          }
+          
           loadAgendamentos(userId);
         }
       )
@@ -150,6 +196,9 @@ export default function Dashboard() {
   const updateStatus = async (id: string, newStatus: string) => {
     if (!userId) return;
 
+    // Buscar dados do agendamento antes de atualizar
+    const agendamento = agendamentos.find(ag => ag.id === id);
+
     const { error } = await supabase
       .from('agendamentos')
       .update({ status: newStatus })
@@ -159,6 +208,27 @@ export default function Dashboard() {
     if (error) {
       toast.error("Erro ao atualizar status");
       return;
+    }
+
+    // Enviar notificação WhatsApp baseado no novo status
+    if (agendamento) {
+      let notificationType: "confirmacao" | "cancelamento" | "conclusao" | null = null;
+      
+      switch (newStatus) {
+        case "confirmado":
+          notificationType = "confirmacao";
+          break;
+        case "cancelado":
+          notificationType = "cancelamento";
+          break;
+        case "concluido":
+          notificationType = "conclusao";
+          break;
+      }
+      
+      if (notificationType) {
+        await sendWhatsAppNotification(notificationType, agendamento);
+      }
     }
 
     toast.success("Status atualizado com sucesso!");
@@ -281,7 +351,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="container mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8 p-6 bg-card border border-gold/20 rounded-lg">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 p-6 bg-card border border-gold/20 rounded-lg">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-gold/10 flex items-center justify-center">
               <Building2 className="w-6 h-6 text-gold" />
@@ -293,10 +363,27 @@ export default function Dashboard() {
               <p className="text-sm text-muted-foreground">Gerenciamento de agendamentos</p>
             </div>
           </div>
-          <Button onClick={handleLogout} variant="outline" className="gap-2 border-gold/20 text-gold hover:bg-gold/10">
-            <LogOut className="w-4 h-4" />
-            Sair
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            {/* Indicador de conexão em tempo real */}
+            <div className="flex items-center gap-2 px-3 py-2 bg-green-500/10 border border-green-500/30 rounded-lg">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-sm text-green-500">Tempo Real Ativo</span>
+            </div>
+            
+            {/* Botão WhatsApp */}
+            <Button 
+              onClick={() => window.open(WHATSAPP_LINK, '_blank')}
+              className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+            >
+              <MessageCircle className="w-4 h-4" />
+              Abrir WhatsApp
+            </Button>
+            
+            <Button onClick={handleLogout} variant="outline" className="gap-2 border-gold/20 text-gold hover:bg-gold/10">
+              <LogOut className="w-4 h-4" />
+              Sair
+            </Button>
+          </div>
         </div>
 
         {/* Métricas */}
