@@ -11,13 +11,13 @@ export const Footer = () => {
       <div className="container mx-auto px-4 py-16 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12 stagger-children">
           {/* Sobre */}
-          <div className="animate-slide-in-left flex flex-col items-center md:items-start">
+          <div className="animate-slide-in-left flex flex-col items-center text-center md:items-start md:text-left">
             <img 
               src={zentrixiaLogo} 
               alt="ZENTRIXIA - Elite. Unrivaled. Yours." 
-              className="w-64 mb-6 hover:scale-105 transition-transform duration-300"
+              className="w-64 mb-6 hover:scale-105 transition-transform duration-300 mx-auto md:mx-0"
             />
-            <p className="text-muted-foreground mb-4 text-center md:text-left">
+            <p className="text-muted-foreground mb-4">
               Transformando homens em homens de sucesso desde 2012.
             </p>
             <div className="inline-flex items-center gap-2 bg-gold/20 px-4 py-2 rounded-full border border-gold/30 shimmer glow-pulse">
