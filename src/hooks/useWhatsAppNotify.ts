@@ -16,8 +16,8 @@ interface Agendamento {
 
 type NotificationType = "novo_agendamento" | "cancelamento" | "confirmacao" | "conclusao";
 
-// Link direto do WhatsApp do proprietário
-const OWNER_WHATSAPP_LINK = "https://wa.me/message/LZQJBTUALFUYE1";
+// Número do WhatsApp do proprietário (formato internacional sem +)
+const OWNER_WHATSAPP_NUMBER = "5511999999999"; // SUBSTITUA pelo seu número real
 
 const formatDate = (dateStr: string): string => {
   const date = new Date(dateStr + 'T00:00:00');
@@ -79,17 +79,23 @@ ${agendamento.observacoes ? `📝 *Obs:* ${agendamento.observacoes}` : ''}
 export const sendWhatsAppNotification = async (
   type: NotificationType,
   agendamento: Agendamento,
-  showToast: boolean = true
-): Promise<{ success: boolean; message?: string }> => {
+  showToast: boolean = true,
+  autoOpenWhatsApp: boolean = true
+): Promise<{ success: boolean; message?: string; whatsappUrl?: string }> => {
   try {
     console.log(`Sending WhatsApp notification: ${type}`, agendamento);
     
     // Gerar mensagem localmente
     const mensagem = generateMessage(type, agendamento);
     
-    // Abrir WhatsApp em nova aba com a mensagem
-    // Usar o link direto fornecido pelo usuário
-    const whatsappUrl = `${OWNER_WHATSAPP_LINK}`;
+    // Criar URL do WhatsApp com a mensagem codificada
+    const encodedMessage = encodeURIComponent(mensagem);
+    const whatsappUrl = `https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=${encodedMessage}`;
+    
+    // Abrir WhatsApp automaticamente com a mensagem
+    if (autoOpenWhatsApp) {
+      window.open(whatsappUrl, '_blank');
+    }
     
     // Mostrar notificação na tela
     if (showToast) {
@@ -113,13 +119,13 @@ export const sendWhatsAppNotification = async (
         description: `${agendamento.servico} - ${formatDate(agendamento.data)} às ${agendamento.horario}`,
         duration: 8000,
         action: {
-          label: "Abrir WhatsApp",
+          label: "Enviar WhatsApp",
           onClick: () => window.open(whatsappUrl, '_blank')
         }
       });
     }
 
-    return { success: true, message: mensagem };
+    return { success: true, message: mensagem, whatsappUrl };
   } catch (error: any) {
     console.error("Error sending WhatsApp notification:", error);
     if (showToast) {
