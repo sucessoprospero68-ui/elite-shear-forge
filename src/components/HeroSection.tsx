@@ -60,15 +60,15 @@ export const HeroSection = ({ onBookNowClick }: HeroSectionProps) => {
         </p>
 
         {/* CTA Button */}
-        <div className="animate-scale-bounce flex justify-center w-full" style={{ animationDelay: '0.8s' }}>
+        <div className="animate-scale-bounce flex justify-center w-full px-4" style={{ animationDelay: '0.8s' }}>
           <Button 
             onClick={onBookNowClick}
             size="lg"
-            className="btn-hero pulse-gold text-base md:text-lg px-6 md:px-12 py-6 md:py-7 mb-6 btn-magnetic ripple relative overflow-hidden group w-full max-w-xs md:max-w-none md:w-auto"
+            className="btn-hero pulse-gold text-sm md:text-lg px-4 md:px-12 py-6 md:py-7 mb-6 btn-magnetic ripple relative overflow-hidden group w-auto whitespace-nowrap"
           >
             <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
-            <Calendar className="w-5 h-5 md:w-6 md:h-6 mr-2 md:mr-3 animate-rotate-pulse" />
-            <span className="text-center">AGENDAR AGORA - VAGAS LIMITADAS</span>
+            <Calendar className="w-4 h-4 md:w-6 md:h-6 mr-2 md:mr-3 animate-rotate-pulse flex-shrink-0" />
+            <span>AGENDAR AGORA - VAGAS LIMITADAS</span>
           </Button>
         </div>
 
