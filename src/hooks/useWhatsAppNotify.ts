@@ -16,8 +16,9 @@ interface Agendamento {
 
 type NotificationType = "novo_agendamento" | "cancelamento" | "confirmacao" | "conclusao";
 
-// Número do WhatsApp do proprietário (formato internacional sem +)
-const OWNER_WHATSAPP_NUMBER = "5511999999999"; // SUBSTITUA pelo seu número real
+// Link direto do WhatsApp do proprietário (configurado pelo usuário)
+const OWNER_WHATSAPP_LINK = "https://wa.me/message/LZQJBTUALFUYE1";
+const OWNER_WHATSAPP_NUMBER = "5511932071021";
 
 const formatDate = (dateStr: string): string => {
   const date = new Date(dateStr + 'T00:00:00');
@@ -88,9 +89,9 @@ export const sendWhatsAppNotification = async (
     // Gerar mensagem localmente
     const mensagem = generateMessage(type, agendamento);
     
-    // Criar URL do WhatsApp com a mensagem codificada
+    // Usar o link direto do WhatsApp Business configurado
     const encodedMessage = encodeURIComponent(mensagem);
-    const whatsappUrl = `https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=${encodedMessage}`;
+    const whatsappUrl = `${OWNER_WHATSAPP_LINK}`;
     
     // Abrir WhatsApp automaticamente com a mensagem
     if (autoOpenWhatsApp) {
