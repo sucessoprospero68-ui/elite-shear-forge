@@ -27,7 +27,7 @@ export const Footer = () => {
           </div>
 
           {/* Links Rápidos */}
-          <div className="animate-slide-in-up" style={{ animationDelay: '0.2s' }}>
+          <div className="animate-slide-in-up flex flex-col items-center text-center md:items-start md:text-left" style={{ animationDelay: '0.2s' }}>
             <h4 className="text-xl font-heading mb-4 text-gold flex items-center gap-2">
               <Sparkles className="w-5 h-5" />
               Links Rápidos
@@ -56,32 +56,32 @@ export const Footer = () => {
           </div>
 
           {/* Contato */}
-          <div className="animate-slide-in-right" style={{ animationDelay: '0.4s' }}>
+          <div className="animate-slide-in-right flex flex-col items-center text-center md:items-start md:text-left" style={{ animationDelay: '0.4s' }}>
             <h4 className="text-xl font-heading mb-4 text-gold flex items-center gap-2">
               <MapPin className="w-5 h-5" />
               Contato & Localização
             </h4>
             <ul className="space-y-3">
-              <li className="flex items-start gap-3 group">
+              <li className="flex items-center md:items-start gap-3 group justify-center md:justify-start">
                 <MapPin className="w-5 h-5 text-gold shrink-0 mt-1 group-hover:animate-pulse" />
                 <span className="text-muted-foreground group-hover:text-foreground transition-colors">
                   Av. Paulista, 1000 - Bela Vista<br />
                   São Paulo - SP, 01310-100
                 </span>
               </li>
-              <li className="flex items-center gap-3 group">
+              <li className="flex items-center gap-3 group justify-center md:justify-start">
                 <Phone className="w-5 h-5 text-gold group-hover:animate-pulse" />
                 <a href="tel:+5511999999999" className="text-muted-foreground hover:text-gold transition-colors underline-animate">
                   (11) 99999-9999
                 </a>
               </li>
-              <li className="flex items-center gap-3 group">
+              <li className="flex items-center gap-3 group justify-center md:justify-start">
                 <Mail className="w-5 h-5 text-gold group-hover:animate-pulse" />
                 <a href="mailto:contato@barberiapremium.com" className="text-muted-foreground hover:text-gold transition-colors underline-animate">
                   contato@barberiapremium.com
                 </a>
               </li>
-              <li className="flex items-start gap-3 group">
+              <li className="flex items-center md:items-start gap-3 group justify-center md:justify-start">
                 <Clock className="w-5 h-5 text-gold shrink-0 mt-1 group-hover:animate-pulse" />
                 <div className="text-muted-foreground">
                   <div className="font-semibold text-gold mb-1">Horário de Funcionamento</div>
@@ -93,7 +93,7 @@ export const Footer = () => {
             </ul>
 
             {/* Redes Sociais */}
-            <div className="flex gap-4 mt-6">
+            <div className="flex gap-4 mt-6 justify-center md:justify-start">
               <a 
                 href="https://instagram.com" 
                 target="_blank" 
