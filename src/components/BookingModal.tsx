@@ -14,8 +14,8 @@ import { format } from "date-fns";
 import { z } from "zod";
 import { sendWhatsAppNotification } from "@/hooks/useWhatsAppNotify";
 
-// Link do WhatsApp da barbearia
-const WHATSAPP_LINK = "https://wa.me/message/LZQJBTUALFUYE1";
+// Número do WhatsApp da barbearia (formato internacional, sem espaços)
+const OWNER_WHATSAPP_NUMBER = "5511932071021";
 
 // ID do dono padrão (sua conta do painel) para receber todos os agendamentos
 // Usuário: multflaviopassivo@gmail.com
@@ -115,8 +115,10 @@ ${formData.observacoes ? `\n📝 *Observações:* ${formData.observacoes}` : ''}
 
 Aguardo confirmação! 🙏`;
 
-      // Usar o link direto fornecido
-      window.open(WHATSAPP_LINK, '_blank');
+      const encodedMessage = encodeURIComponent(mensagem);
+      const whatsappUrl = `https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=${encodedMessage}`;
+
+      window.open(whatsappUrl, '_blank');
       
       toast.success("Abrindo WhatsApp...");
     } catch (error) {

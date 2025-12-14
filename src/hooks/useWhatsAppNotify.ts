@@ -89,9 +89,9 @@ export const sendWhatsAppNotification = async (
     // Gerar mensagem localmente
     const mensagem = generateMessage(type, agendamento);
     
-    // Usar o link direto do WhatsApp Business configurado
+    // Gerar link direto para o WhatsApp do proprietário com a mensagem preenchida
     const encodedMessage = encodeURIComponent(mensagem);
-    const whatsappUrl = `${OWNER_WHATSAPP_LINK}`;
+    const whatsappUrl = `https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=${encodedMessage}`;
     
     // Abrir WhatsApp automaticamente com a mensagem
     if (autoOpenWhatsApp) {

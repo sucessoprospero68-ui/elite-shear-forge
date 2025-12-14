@@ -34,8 +34,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { sendWhatsAppNotification } from "@/hooks/useWhatsAppNotify";
 
-// Link do WhatsApp para notificações diretas
-const WHATSAPP_LINK = "https://wa.me/message/LZQJBTUALFUYE1";
+// Número do WhatsApp para notificações diretas (formato internacional, sem espaços)
+const WHATSAPP_LINK = "https://wa.me/5511932071021";
 
 interface Agendamento {
   id: string;
