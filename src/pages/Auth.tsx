@@ -4,21 +4,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { UserCircle, Lock, Mail, Building2 } from "lucide-react";
+import { UserCircle, Lock, Mail, Building2, Phone, User } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
 const signupSchema = z.object({
   email: z.string().email("Email inválido"),
-  password: z.string().min(12, "Senha deve ter pelo menos 12 caracteres"),
+  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+  nomeCompleto: z.string().min(3, "Nome completo deve ter pelo menos 3 caracteres"),
   nomeNegocio: z.string().min(3, "Nome do negócio deve ter pelo menos 3 caracteres"),
+  whatsapp: z.string().min(10, "WhatsApp deve ter pelo menos 10 dígitos").regex(/^[\d\s\(\)-]+$/, "WhatsApp inválido"),
 });
 
 export default function Auth() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [nomeCompleto, setNomeCompleto] = useState("");
   const [nomeNegocio, setNomeNegocio] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -49,7 +53,11 @@ export default function Auth() {
       toast.success('Login realizado com sucesso!');
       navigate('/dashboard');
     } catch (error: any) {
-      toast.error(error.message || 'Erro ao fazer login');
+      if (error.message?.includes('Invalid login credentials')) {
+        toast.error('Email ou senha incorretos');
+      } else {
+        toast.error(error.message || 'Erro ao fazer login');
+      }
     } finally {
       setLoading(false);
     }
@@ -61,26 +69,46 @@ export default function Auth() {
 
     try {
       // Validar dados
-      signupSchema.parse({ email, password, nomeNegocio });
+      signupSchema.parse({ email, password, nomeCompleto, nomeNegocio, whatsapp });
 
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
             nome_negocio: nomeNegocio,
+            nome_completo: nomeCompleto,
+            whatsapp: whatsapp,
           },
         },
       });
 
       if (error) throw error;
 
-      toast.success('Conta criada com sucesso! Você já pode fazer login.');
+      // Atualizar o perfil com os dados adicionais
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            nome_completo: nomeCompleto,
+            whatsapp: whatsapp,
+            email: email,
+          })
+          .eq('id', data.user.id);
+
+        if (profileError) {
+          console.error('Erro ao atualizar perfil:', profileError);
+        }
+      }
+
+      toast.success('Conta criada com sucesso! Faça login para continuar.');
       setIsSignup(false);
       setEmail('');
       setPassword('');
+      setNomeCompleto('');
       setNomeNegocio('');
+      setWhatsapp('');
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
@@ -134,8 +162,8 @@ export default function Auth() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('reset') === 'true') {
-      const newPassword = prompt('Digite sua nova senha (mínimo 12 caracteres):');
-      if (newPassword && newPassword.length >= 12) {
+      const newPassword = prompt('Digite sua nova senha (mínimo 6 caracteres):');
+      if (newPassword && newPassword.length >= 6) {
         handleUpdatePassword(newPassword);
       }
     }
@@ -155,12 +183,29 @@ export default function Auth() {
             {isForgotPassword 
               ? 'Recuperar senha' 
               : (isSignup 
-                ? 'Cadastre seu negócio e comece a gerenciar agendamentos' 
+                ? 'Cadastre-se para gerenciar seus agendamentos' 
                 : 'Entre para acessar seu painel')}
           </p>
         </div>
 
         <form onSubmit={isForgotPassword ? handleForgotPassword : (isSignup ? handleSignup : handleLogin)} className="space-y-4">
+          {isSignup && (
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">
+                <User className="w-4 h-4 inline mr-2" />
+                Nome Completo
+              </label>
+              <Input
+                type="text"
+                value={nomeCompleto}
+                onChange={(e) => setNomeCompleto(e.target.value)}
+                required
+                className="bg-black-deep border-gold/20 text-white"
+                placeholder="Seu nome completo"
+              />
+            </div>
+          )}
+
           <div>
             <label className="text-sm text-muted-foreground mb-2 block">
               <Mail className="w-4 h-4 inline mr-2" />
@@ -188,27 +233,44 @@ export default function Auth() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="bg-black-deep border-gold/20 text-white"
-                placeholder="Mínimo 12 caracteres"
-                minLength={12}
+                placeholder="Mínimo 6 caracteres"
+                minLength={6}
               />
             </div>
           )}
 
           {isSignup && (
-            <div>
-              <label className="text-sm text-muted-foreground mb-2 block">
-                <Building2 className="w-4 h-4 inline mr-2" />
-                Nome do Negócio
-              </label>
-              <Input
-                type="text"
-                value={nomeNegocio}
-                onChange={(e) => setNomeNegocio(e.target.value)}
-                required
-                className="bg-black-deep border-gold/20 text-white"
-                placeholder="Minha Barbearia Premium"
-              />
-            </div>
+            <>
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 block">
+                  <Phone className="w-4 h-4 inline mr-2" />
+                  WhatsApp
+                </label>
+                <Input
+                  type="tel"
+                  value={whatsapp}
+                  onChange={(e) => setWhatsapp(e.target.value)}
+                  required
+                  className="bg-black-deep border-gold/20 text-white"
+                  placeholder="(11) 99999-9999"
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 block">
+                  <Building2 className="w-4 h-4 inline mr-2" />
+                  Nome do Negócio
+                </label>
+                <Input
+                  type="text"
+                  value={nomeNegocio}
+                  onChange={(e) => setNomeNegocio(e.target.value)}
+                  required
+                  className="bg-black-deep border-gold/20 text-white"
+                  placeholder="Minha Barbearia Premium"
+                />
+              </div>
+            </>
           )}
 
           <Button
@@ -216,7 +278,7 @@ export default function Auth() {
             disabled={loading}
             className="w-full bg-gold hover:bg-gold/90 text-black font-semibold"
           >
-            {loading ? 'Processando...' : (isForgotPassword ? 'Enviar Email de Recuperação' : (isSignup ? 'Criar Conta' : 'Entrar'))}
+            {loading ? 'Processando...' : (isForgotPassword ? 'Enviar Email' : (isSignup ? 'Criar Conta' : 'Entrar'))}
           </Button>
 
           <div className="text-center space-y-2">
