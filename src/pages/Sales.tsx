@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check, Star, Clock, Users, Calendar, MessageSquare, Shield, Zap, ArrowRight, Play, Lock, AlertTriangle, TrendingUp, BadgeCheck, Flame, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Importando fotos reais dos clientes
 import testimonialCarlos from "@/assets/testimonial-carlos.jpg";
@@ -21,6 +23,12 @@ const Sales = () => {
   const [spotsLeft, setSpotsLeft] = useState(7);
 
   useEffect(() => {
+    checkDemoStatus();
+    loadSpotsLeft();
+  }, []);
+
+  const checkDemoStatus = async () => {
+    // Primeiro verifica localStorage (fallback)
     const demoStart = localStorage.getItem("demo_start_date");
     if (demoStart) {
       const startDate = new Date(demoStart);
@@ -36,16 +44,41 @@ const Sales = () => {
         setDaysRemaining(7 - diffDays);
       }
     }
-    
-    // Simular vagas limitadas
-    const randomSpots = Math.floor(Math.random() * 5) + 3;
-    setSpotsLeft(randomSpots);
-  }, []);
+  };
 
-  const startDemo = () => {
+  const loadSpotsLeft = async () => {
+    // Calcular vagas restantes baseado em demos ativos
+    const { count } = await supabase
+      .from('demo_trials')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'ativo');
+    
+    // Simular escassez (10 vagas - demos ativos)
+    const remaining = Math.max(3, 10 - (count || 0));
+    setSpotsLeft(remaining);
+  };
+
+  const startDemo = async () => {
+    // Salvar no banco de dados
+    const { error } = await supabase
+      .from('demo_trials')
+      .insert({
+        email: 'visitante@demo.com', // Será atualizado no cadastro
+        nome: 'Visitante',
+        origem: 'pagina_vendas',
+        user_agent: navigator.userAgent,
+      });
+
+    if (error) {
+      console.error('Erro ao registrar demo:', error);
+    }
+
+    // Salvar também no localStorage como fallback
     localStorage.setItem("demo_start_date", new Date().toISOString());
     setDemoStarted(true);
     setDaysRemaining(7);
+    
+    toast.success("Demo iniciado! Crie sua conta para acessar o sistema.");
     navigate("/auth");
   };
 

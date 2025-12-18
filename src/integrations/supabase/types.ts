@@ -59,6 +59,69 @@ export type Database = {
         }
         Relationships: []
       }
+      demo_trials: {
+        Row: {
+          acessos: number | null
+          convertido_em: string | null
+          criado_em: string
+          data_expiracao: string
+          data_inicio: string
+          email: string
+          id: string
+          ip_address: string | null
+          nome: string | null
+          nome_negocio: string | null
+          observacoes: string | null
+          origem: string | null
+          status: string
+          ultimo_acesso: string | null
+          user_agent: string | null
+          user_id: string | null
+          valor_conversao: number | null
+          whatsapp: string | null
+        }
+        Insert: {
+          acessos?: number | null
+          convertido_em?: string | null
+          criado_em?: string
+          data_expiracao?: string
+          data_inicio?: string
+          email: string
+          id?: string
+          ip_address?: string | null
+          nome?: string | null
+          nome_negocio?: string | null
+          observacoes?: string | null
+          origem?: string | null
+          status?: string
+          ultimo_acesso?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          valor_conversao?: number | null
+          whatsapp?: string | null
+        }
+        Update: {
+          acessos?: number | null
+          convertido_em?: string | null
+          criado_em?: string
+          data_expiracao?: string
+          data_inicio?: string
+          email?: string
+          id?: string
+          ip_address?: string | null
+          nome?: string | null
+          nome_negocio?: string | null
+          observacoes?: string | null
+          origem?: string | null
+          status?: string
+          ultimo_acesso?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          valor_conversao?: number | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -122,6 +185,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      update_expired_demos: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user"
