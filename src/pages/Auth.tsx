@@ -28,15 +28,24 @@ export default function Auth() {
   const [isForgotPassword, setIsForgotPassword] = useState(false);
 
   useEffect(() => {
-    checkUser();
-  }, []);
+    // Configurar listener de autenticação PRIMEIRO
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session) {
+          navigate('/dashboard');
+        }
+      }
+    );
 
-  const checkUser = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      navigate('/dashboard');
-    }
-  };
+    // DEPOIS verificar sessão existente
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        navigate('/dashboard');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,27 +97,36 @@ export default function Auth() {
 
       // Atualizar o perfil com os dados adicionais
       if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            nome_completo: nomeCompleto,
-            whatsapp: whatsapp,
-            email: email,
-          })
-          .eq('id', data.user.id);
+        // Aguardar um pouco para o trigger criar o perfil
+        setTimeout(async () => {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({
+              nome_completo: nomeCompleto,
+              whatsapp: whatsapp,
+              email: email,
+            })
+            .eq('id', data.user!.id);
 
-        if (profileError) {
-          console.error('Erro ao atualizar perfil:', profileError);
-        }
+          if (profileError) {
+            console.error('Erro ao atualizar perfil:', profileError);
+          }
+        }, 500);
       }
 
-      toast.success('Conta criada com sucesso! Faça login para continuar.');
-      setIsSignup(false);
-      setEmail('');
-      setPassword('');
-      setNomeCompleto('');
-      setNomeNegocio('');
-      setWhatsapp('');
+      // Se o usuário foi criado e tem sessão, redirecionar automaticamente
+      if (data.session) {
+        toast.success('Conta criada com sucesso! Redirecionando...');
+        navigate('/dashboard');
+      } else {
+        toast.success('Conta criada com sucesso! Faça login para continuar.');
+        setIsSignup(false);
+        setEmail('');
+        setPassword('');
+        setNomeCompleto('');
+        setNomeNegocio('');
+        setWhatsapp('');
+      }
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
