@@ -8,6 +8,7 @@ import Admin from "./pages/Admin";
 import AdminAuth from "./pages/AdminAuth";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import Sales from "./pages/Sales";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,6 +21,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/vendas" element={<Sales />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
           {/* Rotas antigas redirecionam para as novas */}
